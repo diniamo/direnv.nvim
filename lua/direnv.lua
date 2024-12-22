@@ -26,13 +26,17 @@ function M.reload()
     )
 end
 
-function M.check()
+local function get_rc(callback)
     vim.system(
         { M.config.direnv, "status", "--json" },
         { text = true },
-        function(obj)
-            local rc = vim.json.decode(obj.stdout).state.foundRC
+        function(obj) callback(vim.json.decode(obj.stdout).state.foundRC) end
+    )
+end
 
+function M.check()
+    get_rc(
+        function(rc)
             if rc == vim.NIL then
                 return
             end
@@ -51,6 +55,26 @@ function M.check()
             end)
         end
     )
+end
+
+local watch_handle = nil
+local function update_watch()
+    if watch_handle then
+        vim.uv.fs_event_stop(watch_handle)
+    end
+
+    get_rc(function(rc)
+        if rc == vim.NIL then
+            return
+        end
+
+        watch_handle = vim.uv.new_fs_event()
+        vim.uv.fs_event_start(watch_handle, rc.path, {}, function(_, _, events)
+            if events.change then
+                M.reload()
+            end
+        end)
+    end)
 end
 
 function M.setup(user_config)
@@ -75,13 +99,25 @@ function M.setup(user_config)
         end
     end, { nargs = 1 })
 
+    local group = vim.api.nvim_create_augroup("direnv_nvim", {})
+
     if M.config.autoload then
         M.check()
 
         vim.api.nvim_create_autocmd("DirChanged", {
-            group = vim.api.nvim_create_augroup("direnv_nvim", {}),
+            group = group,
             pattern = "global",
             callback = M.check
+        })
+    end
+
+    if M.config.watch_envrc then
+        update_watch()
+
+        vim.api.nvim_create_autocmd("DirChanged", {
+            group = group,
+            pattern = "global",
+            callback = update_watch
         })
     end
 end

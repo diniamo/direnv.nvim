@@ -11,7 +11,11 @@ require("direnv").setup({
     -- The direnv command/executable to run
     direnv = "direnv",
     -- Automatically load .envrc files on startup and when changing directories
-    autoload = false
+    autoload = false,
+    -- Automatically reload .envrc files when they are changed
+    -- Note that this only works if specifically .envrc is changed, and doesn't
+    -- if files that .envrc uses change
+    watch_envrc = false
 })
 ```
 
