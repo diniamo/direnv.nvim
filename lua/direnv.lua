@@ -1,7 +1,7 @@
 local M = {
     config = {
         direnv = "direnv",
-        autoload = false
+        auto_load = false
     }
 }
 
@@ -101,7 +101,7 @@ function M.setup(user_config)
 
     local group = vim.api.nvim_create_augroup("direnv_nvim", {})
 
-    if M.config.autoload then
+    if M.config.auto_load then
         M.check()
 
         vim.api.nvim_create_autocmd("DirChanged", {

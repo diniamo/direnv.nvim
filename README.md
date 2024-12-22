@@ -11,7 +11,7 @@ require("direnv").setup({
     -- The direnv command/executable to run
     direnv = "direnv",
     -- Automatically load .envrc files on startup and when changing directories
-    autoload = false,
+    auto_load = false,
     -- Automatically reload .envrc files when they are changed
     -- Note that this only works if specifically .envrc is changed, and doesn't
     -- if files that .envrc uses change
@@ -23,7 +23,7 @@ require("direnv").setup({
 
 The plugin provides a `Direnv` command, with 3 subcommands: `allow`, `deny`, `reload` (also used for loading). The same functionality is also exposed through lua functions (see the API section for that below).
 
-If you don't want to enable the `autoload` option, then it's recommended to create mappings:
+If you don't want to enable the `auto_load` option, then it's recommended to create mappings:
 
 ```lua
 local direnv = require("direnv")
