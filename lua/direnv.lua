@@ -1,7 +1,8 @@
 local M = {
     config = {
         direnv = "direnv",
-        auto_load = false
+        auto_load = false,
+        watch_envrc = false
     }
 }
 
