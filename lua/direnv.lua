@@ -7,25 +7,34 @@ local M = {
 }
 
 function M.allow(callback)
-    vim.notify("Allowing .envrc")
     vim.system({ M.config.direnv, "allow" }, {}, callback)
+    vim.notify(".envrc allowed")
 end
 
 function M.deny()
-    vim.notify("Denying .envrc")
     vim.system({ M.config.direnv, "deny" })
+    vim.notify(".envrc denied")
 end
 
 function M.reload()
-    vim.notify("Loading .envrc")
+    -- This variable based approach is required, because unset opts are
+    -- inherated in replaced notifications, and we can't override them, because
+    -- setting something to nil means it's not in the table
+    local keep = true
+    local notification = vim.notify("Loading .envrc...", nil, { keep = function() return keep end })
+
     vim.system(
         { M.config.direnv, "export", "vim" },
         { text = true },
-        function(obj)
-            vim.schedule(function() vim.fn.execute(obj.stdout) end)
-        end
+        vim.schedule_wrap(function(obj)
+            vim.fn.execute(obj.stdout)
+
+            vim.notify(".envrc loaded", nil, { replace = notification })
+            keep = false
+        end)
     )
 end
+local schedule_reload = vim.schedule_wrap(M.reload)
 
 local function get_rc(callback)
     vim.system(
@@ -43,7 +52,7 @@ function M.check()
             end
 
             if rc.allowed == 0 then
-                M.reload()
+                schedule_reload()
                 return
             end
 
@@ -51,7 +60,7 @@ function M.check()
                 local choice = vim.fn.confirm(rc.path .. " is denied.", "&Allow\n&Ignore", 2)
 
                 if choice == 1 then
-                    M.allow(M.reload)
+                    M.allow(schedule_reload)
                 end
             end)
         end
@@ -72,7 +81,7 @@ local function update_watch()
         watch_handle = vim.uv.new_fs_event()
         vim.uv.fs_event_start(watch_handle, rc.path, {}, function(_, _, events)
             if events.change then
-                M.reload()
+                schedule_reload()
             end
         end)
     end)
